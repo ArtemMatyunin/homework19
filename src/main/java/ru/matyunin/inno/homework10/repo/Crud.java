@@ -16,6 +16,7 @@ public interface Crud<T> {
      * @param entity список сущностей, которые нужно добавить в БД
      * @return массив id добавленных элементов
      */
+
     int[] save(List<T> entity);
 
     /**

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class = "ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+          <pattern>
+        %d{HH:mm:ss.SSS} |-%-2level in [%t] %logger{36}.%M - %msg%n
+      </pattern>
+      </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/logback/log.log</file>
+      <rollingPolicy
+        class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>log.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <!-- Храним файлы логов 7 дней -->
+      <maxHistory>7</maxHistory>
+      <!-- Максимальный размер файлов лога 1 гигабайт -->
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{dd.MM.yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{20}.%M - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <appender name="db" class="ch.qos.logback.classic.db.DBAppender">
+    <connectionSource class="ch.qos.logback.core.db.DriverManagerConnectionSource">
+      <driverClass>org.postgresql.Driver</driverClass>
+      <url>jdbc:postgresql://localhost:5432/blog</url>
+      <user>postgres</user>
+      <password>1111</password>
+    </connectionSource>
+  </appender>
+
+
+  <root level="debug">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+  <logger name="ru.matyunin.inno.homework10.repo.CrudUserImpl" level="debug" additivity="false">
+    <appender-ref ref="db"/>
+    <appender-ref ref="FILE"/>
+      <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <logger name="ru.matyunin.inno.homework10.repo.CrudArticleImpl" level="debug" additivity="false">
+      <appender-ref ref="db"/>
+      <appender-ref ref="FILE"/>
+      <appender-ref ref="CONSOLE"/>
+  </logger>
+
+    <logger name="ru.matyunin.inno.homework10.app.Main" level="debug" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+</configuration>

@@ -1,5 +1,8 @@
 package ru.matyunin.inno.homework10.dbutils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -13,6 +16,7 @@ import java.sql.SQLException;
 
 public class ConnectionManagerImpl implements ConnectionManager {
     public static final ConnectionManager INSTANCE = new ConnectionManagerImpl();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private ConnectionManagerImpl() {
 
@@ -33,10 +37,11 @@ public class ConnectionManagerImpl implements ConnectionManager {
             connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/blog",
                     "postgres",
                     "1111");
-        } catch (SQLException throwables) {
-            System.err.println("Невозможно подключиться к базе данных. Проверьте параметры подключения");
-            throwables.printStackTrace();
+            logger.info("Открыто соединение с Базой данных '{}'", connection.getCatalog());
+        } catch (SQLException e) {
+            logger.error("Не удалось установить соединение с Базой данных", e);
         }
+
         return connection;
     }
 }

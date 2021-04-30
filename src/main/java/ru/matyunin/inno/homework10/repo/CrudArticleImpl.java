@@ -1,5 +1,7 @@
 package ru.matyunin.inno.homework10.repo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.matyunin.inno.homework10.models.Article;
 import ru.matyunin.inno.homework10.dbutils.ConnectionManager;
 import ru.matyunin.inno.homework10.dbutils.ConnectionManagerImpl;
@@ -16,6 +18,13 @@ import java.util.List;
 
 public class CrudArticleImpl implements CrudArticle {
     private static final ConnectionManager connectionManager = ConnectionManagerImpl.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final String SQL_ADD_ARTICLE = "INSERT INTO articles (article_title, article_text, article_author, article_date) VALUES (?,?,?,?)";
+    private static final String SQL_ADD_HIDE = "INSERT INTO hide (hide_article, hide_user) VALUES (?,?)";
+    private static final String SQL_FIND_BY_ID = "SELECT * FROM articles inner join users u on u.user_id = articles.article_author";
+
+
 
     @Override
     public int[] save(List<Article> entity) {
@@ -24,21 +33,19 @@ public class CrudArticleImpl implements CrudArticle {
 
     /**
      * По заданию такого метода не требуется. Сделал, пока проверял коннект с базой и оставил
+     *
      * @return список всех постов, с указанием имени автора
      */
 
     @Override
     public List<Article> findAll() {
-        String SQL_FIND_BY_ID = "SELECT * FROM articles right join users u on u.user_id = articles.article_author";
 
         List<Article> articles = new ArrayList<>();
         try (Connection connection = connectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_BY_ID)
         ) {
             try (ResultSet rs = preparedStatement.executeQuery()) {
-
                 while (rs.next()) {
-
                     articles.add(new Article.Builder()
                             .articleId(rs.getInt(1))
                             .articleAuthor(rs.getString(8) + " " + rs.getString(9))
@@ -52,16 +59,10 @@ public class CrudArticleImpl implements CrudArticle {
 
             }
 
-        } catch (SQLException throwables) {
-            System.err.println("Не удалось получить данные из БД");
-            throwables.printStackTrace();
-        } catch (NullPointerException ignored) {
-
-            // NPE вылетает при добавлении даты к экземпляру Article в том случае,
-            // если собираем объект из недавно добавленной записи из метода addArticle.
-            // Как он получается, я так и не понял - запись в БД происходит без проблем.
-            // Если вызвать метод findAll после renewDatabase баз без добавления нового поста, то NPE не возникает
+        } catch (SQLException e) {
+            logger.error("Не удалось получить данные", e);
         }
+        logger.info("Получено {} записей", articles.size());
         return articles;
     }
 
@@ -76,51 +77,54 @@ public class CrudArticleImpl implements CrudArticle {
     @Override
     public void addArticle(Article article) {
 
-        String SQL_ADD_ARTICLE = "INSERT INTO articles (article_title, article_text, article_author, article_date) VALUES (?,?,?,?)";
-        String SQL_ADD_HIDE = "INSERT INTO hide (hide_article, hide_user) VALUES (?,?)";
+        boolean autoCommit;
         try (Connection connection = connectionManager.getConnection()) {
+            autoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
-            try (PreparedStatement psArt = connection.prepareStatement(SQL_ADD_ARTICLE);
-
-
+            try (PreparedStatement psArt = connection.prepareStatement(SQL_ADD_ARTICLE)
             ) {
                 psArt.setString(1, article.getArticleTitle());
                 psArt.setString(2, article.getArticleText());
                 psArt.setInt(3, article.getArticleAuthorId());
                 psArt.setDate(4, Date.valueOf(article.getArticleDate()));
-
                 psArt.executeUpdate();
 
                 Savepoint after_article = connection.setSavepoint("after_article");
-
-                try (PreparedStatement psHide = connection.prepareStatement(SQL_ADD_HIDE)) {
-                    for (int hideForUser : article.getArticleHideForUsers()) {
-                        psHide.setInt(1, 5);
-                        psHide.setInt(2, hideForUser);
-                        psHide.executeUpdate();
-                    }
-                } catch (SQLException throwables) {
-                    connection.rollback(after_article);
-                    System.err.println("Не удалось добавить ограничения");
-                    throwables.printStackTrace();
-                }
-
+                addHides(connection, article.getArticleHideForUsers(), after_article);
                 connection.commit();
+
+                logger.info("Добавлена запись");
 
             } catch (SQLException e) {
                 connection.rollback();
-                System.err.println("Не удалось сохранить элементы");
-                e.printStackTrace();
+                logger.error("Не удалось выполнить запись", e);
 
             } finally {
-                connection.setAutoCommit(true);
+                connection.setAutoCommit(autoCommit);
             }
 
         } catch (SQLException e) {
-            System.err.println("Не удалось установить соединение");
-            e.printStackTrace();
+            logger.error("Не удалось выполнить запись", e);
         }
-
     }
 
+    private int[] addHides(Connection connection, List<Integer> hides, Savepoint savepoint) throws SQLException {
+
+        int[] rowsHides = new int[0];
+        try (PreparedStatement psHide = connection.prepareStatement(SQL_ADD_HIDE)) {
+                for (int hideForUser : hides) {
+                psHide.setInt(1, 5);
+                psHide.setInt(2, hideForUser);
+                psHide.addBatch();
+            }
+            rowsHides = psHide.executeBatch();
+
+        } catch (SQLException e) {
+                  connection.rollback(savepoint);
+                   logger.error("Не удалось выполнить запись", e);
+        }
+
+        logger.info("Добавлено {} записей", rowsHides.length);
+        return rowsHides;
+    }
 }

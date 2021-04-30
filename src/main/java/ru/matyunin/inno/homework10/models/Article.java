@@ -13,17 +13,25 @@ import java.util.Objects;
 
 public class Article {
 
-    private Integer articleId;
-    private String articleTitle;
-    private String articleText;
-    private Integer articleAuthorId;
-    private String articleAuthor;
-    private LocalDate articleDate;
+    private final Integer articleId;
+    private final String articleTitle;
+    private final String articleText;
+    private final Integer articleAuthorId;
+    private final String articleAuthor;
+    private final LocalDate articleDate;
     private final List<Integer> articleHideForUsers = new ArrayList<>();
 
-    public Article() {
+    private Article(Builder builder) {
+        this.articleId = builder.articleId;
+        this.articleTitle = builder.articleTitle;
 
+        this.articleText = builder.articleText;
+        this.articleAuthorId = builder.articleAuthorId;
+        this.articleAuthor = builder.articleAuthor;
+        this.articleDate = builder.articleDate;
+        articleHideForUsers.addAll(builder.articleHideForUsers);
     }
+
 
 
     public int getArticleId() {
@@ -66,6 +74,7 @@ public class Article {
                 + '\n'
                 + "Author:" + articleAuthor + "; "
                 + "date:" + articleDate + '}'
+                + '\n'
                 + '\n';
     }
 
@@ -79,49 +88,57 @@ public class Article {
 
     public static class Builder {
 
-        private final Article newArticle;
+        private Integer articleId;
+        private String articleTitle;
+        private String articleText;
+        private Integer articleAuthorId;
+        private String articleAuthor;
+        private LocalDate articleDate;
+        private final List<Integer> articleHideForUsers = new ArrayList<>();
+
+      //  private final Article newArticle;
 
         public Builder() {
-            newArticle = new Article();
+           // newArticle = new Article();
         }
 
         public Builder articleId(Integer articleId) {
-            newArticle.articleId = articleId;
+            this.articleId = articleId;
             return this;
         }
 
         public Builder articleTitle(String articleTitle) {
-            newArticle.articleTitle = articleTitle;
+            this.articleTitle = articleTitle;
             return this;
         }
 
         public Builder articleText(String articleText) {
-            newArticle.articleText = articleText;
+            this.articleText = articleText;
             return this;
         }
 
-        public Builder articleAuthorId(Integer articleAuthor) {
-            newArticle.articleAuthorId = articleAuthor;
+        public Builder articleAuthorId(Integer articleAuthorId) {
+            this.articleAuthorId = articleAuthorId;
             return this;
         }
 
         public Builder articleAuthor(String articleAuthor) {
-            newArticle.articleAuthor = articleAuthor;
+            this.articleAuthor = articleAuthor;
             return this;
         }
 
         public Builder articleDate(LocalDate articleDate) {
-            newArticle.articleDate=articleDate;
+            this.articleDate=articleDate;
             return this;
         }
 
         public Builder articleHideForUsers(List<Integer> articleHideForUsers) {
-            newArticle.articleHideForUsers.addAll(articleHideForUsers);
+            this.articleHideForUsers.addAll(articleHideForUsers);
             return this;
         }
 
         public Article build() {
-            return newArticle;
+            return new Article(this);
         }
     }
 }

@@ -7,13 +7,9 @@ import ru.matyunin.inno.homework10.repo.CrudArticle;
 import ru.matyunin.inno.homework10.repo.CrudArticleImpl;
 import ru.matyunin.inno.homework10.repo.CrudUserImpl;
 
-
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
-import static java.time.LocalDate.now;
-import static java.time.LocalDate.of;
+
 
 /**
  * @author Артём Матюнин
@@ -33,52 +29,18 @@ public class BlogServiceImpl implements BlogService {
 
     //пробуем печатать все посты
     @Override
-    public void printArticles() {
-        System.out.println(crudArticleParent.findAll());
+    public List<Article> printArticles() {
+       return crudArticleParent.findAll();
     }
 
     //добавим пост и ограничения на просмотр
-    public void addArticle() {
-        List<Integer> hideList = new ArrayList<>();
-
-        hideList.add(2);
-        hideList.add(3);
-        crudArticle.addArticle(
-                new Article.Builder().articleAuthorId(1)
-                        .articleTitle("Декларативное управление зависимостями")
-                        .articleText("Большинство проектов Java для правильного функционирования полагаются на другие " +
-                                " проекты и фреймворки с открытым кодом.\n Ручное скачивание этих зависимостей и поддержка их " +
-                                " версий при работе над проектом может оказаться довольно затруднительным делом")
-                        .articleDate(now())
-                        .articleHideForUsers(hideList)
-                        .build()
-        );
+    public void addArticle(Article article) {
+        crudArticle.addArticle(article);
     }
 
     //проверяем бачинг
     @Override
-    public int[] addUsers() {
-        List<User> users = new ArrayList<>();
-
-        users.add(new User.Builder()
-                .userName("testuser10")
-                .userFirstName("Ivan")
-                .userSurName("Ivanov")
-                .userBirthDate(LocalDate.parse("1987-01-01"))
-                .build());
-        users.add(new User.Builder()
-                .userName("testuser11")
-                .userFirstName("Petr")
-                .userSurName("Petrov")
-                .userBirthDate(LocalDate.parse("1964-03-08"))
-                .build());
-        users.add(new User.Builder()
-                .userName("testuser12")
-                .userFirstName("Sidor")
-                .userSurName("Sidorov")
-                .userBirthDate(LocalDate.parse("2000-05-22"))
-                .build());
-
+    public int[] addUsers(List<User> users) {
         return crudUser.save(users);
 
     }
